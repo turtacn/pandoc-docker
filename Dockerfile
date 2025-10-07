@@ -72,9 +72,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     # Puppeteer 无沙箱配置
     echo '{ "args": ["--no-sandbox", "--disable-setuid-sandbox"] }' > /root/puppeteer-config.json && \
     # 为 pandoc-mermaid-filter 创建兼容命令
-    echo '#!/bin/bash\nexec mmdc --puppeteerConfigFile /root/puppeteer-config.json "$@"' > /usr/local/bin/mermaid && \
-    chmod +x /usr/local/bin/mermaid
-
+    echo -e '#!/bin/bash\nexec mmdc --puppeteerConfigFile /root/puppeteer-config.json "$@" >/dev/null' \
+  > /usr/local/bin/mermaid && chmod +x /usr/local/bin/mermaid
 
 
 # ------------------------------------------------------------------

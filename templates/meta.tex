@@ -1,5 +1,4 @@
-% meta.tex - simple LaTeX template header for Pandoc PDF using XeLaTeX
-\documentclass[11pt]{article}
+% meta.tex - Pandoc content template (partial)
 \usepackage{geometry}
 \geometry{a4paper,margin=1in}
 \usepackage{fontspec}
@@ -16,15 +15,3 @@
 \fancyhead[L]{\leftmark}
 \fancyhead[R]{}
 \fancyfoot[C]{\thepage}
-\begin{document}
-$if(title)$
-\begin{center}
-  {\LARGE \textbf{$title$}}\\[1em]
-  $if(author)$ {\large $author$}\\[0.5em] $endif$
-  $if(date)$ {\small $date$}\\[0.5em] $endif$
-\end{center}
-$endif$
-
-$body$
-
-\end{document}
