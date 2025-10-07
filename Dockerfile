@@ -135,7 +135,10 @@ RUN apt-get update && \
 WORKDIR /workspace
 
 RUN ln -s /usr/local/bin/pandoc-mermaid /usr/local/bin/pandoc-mermaid-filter
-RUN ln -s /usr/bin/mmdc /usr/local/bin/mermaid
+## RUN ln -s /usr/bin/mmdc /usr/local/bin/mermaid
+# 创建兼容 mermaid 启动脚本（带 --no-sandbox）
+RUN echo '#!/bin/bash\nexec mmdc --no-sandbox --disable-setuid-sandbox "$@"' > /usr/local/bin/mermaid && \
+    chmod +x /usr/local/bin/mermaid
 
 
 # 复制配置文件和模板
