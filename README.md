@@ -71,6 +71,15 @@ docker exec -it pandoc-turta /bin/bash
 
 ### 3) 在项目根目录运行示例
 
+
+```bash
+# 交互式运行
+docker run -it --rm -v $(pwd):/workspace jdcloudiaas/turta:pandoc
+
+# 直接转换
+docker run --rm -v $(pwd):/workspace jdcloudiaas/turta:pandoc md2pdf.sh input.md
+```
+
 本仓库包含示例 `test/sample.md`：
 
 生成 PDF（自动检测 Mermaid）：
