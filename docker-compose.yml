@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  pandoc:
+    image: jdcloudiaas/turta:pandoc
+    volumes:
+      - ./documents:/workspace
+    working_dir: /workspace
+    command: /bin/bash
+    stdin_open: true
+    tty: true
