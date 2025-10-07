@@ -1,0 +1,38 @@
+% 封面页配置
+% 使用方法：--include-before-body cover.tex
+
+% 插入封面图片
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    % 封面图片（需要在工作目录有 cover.png 文件）
+    \includegraphics[width=0.6\textwidth]{cover.png}
+
+    \vspace{2cm}
+
+    % 文档标题（从元数据自动获取）
+    {\Huge\bfseries \@title \par}
+
+    \vspace{1cm}
+
+    % 作者（从元数据自动获取）
+    {\Large \@author \par}
+
+    \vspace{1cm}
+
+    % 日期
+    {\large \@date \par}
+
+    \vfill
+
+    % 版权信息或出版信息
+    {\small 此文档由 Pandoc 生成 \par}
+
+\end{titlepage}
+
+% 清除页眉页脚
+\thispagestyle{empty}
+
+% 换页
+\newpage

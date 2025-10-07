@@ -1,0 +1,107 @@
+{
+  "text-color": "#24292f",
+  "background-color": "#f6f8fa",
+  "line-number-color": "#57606a",
+  "line-number-background-color": "#f6f8fa",
+  "text-styles": {
+    "Other": {
+      "text-color": "#24292f"
+    },
+    "Attribute": {
+      "text-color": "#0550ae"
+    },
+    "SpecialString": {
+      "text-color": "#0a3069"
+    },
+    "Annotation": {
+      "text-color": "#57606a",
+      "italic": true
+    },
+    "Function": {
+      "text-color": "#8250df",
+      "bold": false
+    },
+    "String": {
+      "text-color": "#0a3069"
+    },
+    "ControlFlow": {
+      "text-color": "#cf222e",
+      "bold": true
+    },
+    "Operator": {
+      "text-color": "#cf222e"
+    },
+    "Error": {
+      "text-color": "#f6f8fa",
+      "background-color": "#cf222e",
+      "bold": true
+    },
+    "BaseN": {
+      "text-color": "#0550ae"
+    },
+    "Alert": {
+      "text-color": "#cf222e",
+      "bold": true
+    },
+    "Variable": {
+      "text-color": "#953800"
+    },
+    "BuiltIn": {
+      "text-color": "#8250df"
+    },
+    "Extension": {
+      "text-color": "#8250df"
+    },
+    "Preprocessor": {
+      "text-color": "#57606a"
+    },
+    "Information": {
+      "text-color": "#57606a"
+    },
+    "VerbatimString": {
+      "text-color": "#0a3069"
+    },
+    "Warning": {
+      "text-color": "#953800",
+      "bold": true
+    },
+    "Documentation": {
+      "text-color": "#57606a",
+      "italic": true
+    },
+    "Import": {
+      "text-color": "#cf222e",
+      "bold": true
+    },
+    "Char": {
+      "text-color": "#0a3069"
+    },
+    "DataType": {
+      "text-color": "#cf222e"
+    },
+    "Float": {
+      "text-color": "#0550ae"
+    },
+    "Comment": {
+      "text-color": "#6e7781",
+      "italic": false
+    },
+    "CommentVar": {
+      "text-color": "#6e7781",
+      "italic": false
+    },
+    "Constant": {
+      "text-color": "#0550ae"
+    },
+    "SpecialChar": {
+      "text-color": "#cf222e"
+    },
+    "DecVal": {
+      "text-color": "#0550ae"
+    },
+    "Keyword": {
+      "text-color": "#cf222e",
+      "bold": true
+    }
+  }
+}
