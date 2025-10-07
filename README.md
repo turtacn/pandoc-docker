@@ -24,12 +24,12 @@ pandoc-docker/
 │   ├── md2pdf.sh
 │   └── md2pptx.sh
 ├── templates
-│   ├── bullet\_style.tex
-│   ├── chapter\_break.tex
+│   ├── bullet_style.tex
+│   ├── chapter_break.tex
 │   ├── cover.tex
 │   ├── epub.css
 │   ├── github.css
-│   ├── inline\_code.tex
+│   ├── inline_code.tex
 │   ├── meta.tex
 │   ├── pygments.theme
 │   └── quote.tex
@@ -100,7 +100,7 @@ md2pdf.sh test/sample.md
 
 ### 5) Mermaid 支持说明
 
-脚本会自动检测文件中是否包含 \`\`\`mermaid 块。如果有，脚本会启用 `pandoc-mermaid-filter`，该 filter 会调用 `mmdc`（mermaid-cli）生成图片并在生成文档时嵌入。
+脚本会自动检测文件中是否包含 ```mermaid 块。如果有，脚本会启用 `pandoc-mermaid-filter`，该 filter 会调用 `mmdc`（mermaid-cli）生成图片并在生成文档时嵌入。
 
 ### 6) 常见问题
 
