@@ -1,35 +1,57 @@
 #!/bin/bash
-set -e
+# ===============================================================
+# md2docx.sh
+# Markdown -> DOCX 转换脚本（自动检测 Mermaid；GitHub CSS）
+# Usage:
+#   md2docx.sh input.md
+#   md2docx.sh input.md -o output.docx
+# ===============================================================
+set -euo pipefail
 
-INPUT=""
-OUTPUT=""
-TOC=false
-METADATA=""
-
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --toc) TOC=true; shift ;;
-        --metadata) METADATA="$2"; shift 2 ;;
-        -*) echo "未知选项: $1"; exit 1 ;;
-        *)
-            if [ -z "$INPUT" ]; then INPUT="$1"
-            elif [ -z "$OUTPUT" ]; then OUTPUT="$1"; fi
-            shift ;;
-    esac
-done
-
-if [ -z "$INPUT" ]; then
-    echo "用法: md2docx.sh input.md [output.docx] [--toc] [--metadata file.yaml]"
-    exit 1
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 <input.md> [-o output.docx] [extra pandoc args]"
+  exit 1
 fi
 
-[ -z "$OUTPUT" ] && OUTPUT="${INPUT%.md}.docx"
+INPUT="$1"; shift || true
+OUTPUT="${INPUT%.md}.docx"
 
-CMD="pandoc \"$INPUT\" -f gfm -t docx --standalone"
-[ "$TOC" = true ] && CMD="$CMD --toc --toc-depth=3"
-[ -n "$METADATA" ] && CMD="$CMD --metadata-file=\"$METADATA\""
-CMD="$CMD -o \"$OUTPUT\""
+# check -o
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -o) OUTPUT="$2"; shift 2;;
+    --) shift; break;;
+    *) break;;
+  esac
+done
 
-echo "正在转换: $INPUT -> $OUTPUT"
-eval $CMD
-echo "✅ 转换完成: $OUTPUT"
+FILTER_OPT=""
+if grep -q --fixed-strings '```mermaid' "$INPUT" 2>/dev/null || grep -q --perl-regexp '(?s)```mermaid.*?```' "$INPUT" 2>/dev/null; then
+  echo "🪄 Mermaid blocks found -> enabling pandoc-mermaid-filter (mermaid will be embedded as images)"
+  FILTER_OPT="--filter pandoc-mermaid-filter"
+fi
+
+TPL_DIR="/opt/pandoc/templates"
+CSS_FILE="$TPL_DIR/github.css"
+HIGHLIGHT="$TPL_DIR/pygments.theme"
+
+echo "📘 Converting $INPUT -> $OUTPUT"
+pandoc "$INPUT" \
+  --from markdown+yaml_metadata_block+smart \
+  --to docx \
+  --resource-path="$(dirname "$INPUT")" \
+  --css="$CSS_FILE" \
+  --highlight-style="$HIGHLIGHT" \
+  --toc \
+  --metadata-file="meta.yaml" \
+  $FILTER_OPT \
+  "$@" \
+  -o "$OUTPUT"
+
+echo "✅ Done: $OUTPUT"
+
+# Examples:
+# 1) Basic:
+#    md2docx.sh test/sample.md
+# 2) Custom output:
+#    md2docx.sh test/sample.md -o out/report.docx

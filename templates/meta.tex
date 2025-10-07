@@ -1,5 +1,30 @@
+% meta.tex - simple LaTeX template header for Pandoc PDF using XeLaTeX
+\documentclass[11pt]{article}
+\usepackage{geometry}
+\geometry{a4paper,margin=1in}
+\usepackage{fontspec}
+\setmainfont{Noto Serif}
+\setsansfont{Noto Sans CJK SC}
+\setmonofont{DejaVu Sans Mono}
+\usepackage{xeCJK}
+\setCJKmainfont{Noto Sans CJK SC}
+\usepackage{graphicx}
 \usepackage{hyperref}
-\hypersetup{
-  pdfproducer={Pandoc with XeLaTeX},
-  pdfcreator={Custom Pandoc Docker Container}
-}
+\usepackage{float}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{}
+\fancyfoot[C]{\thepage}
+\begin{document}
+$if(title)$
+\begin{center}
+  {\LARGE \textbf{$title$}}\\[1em]
+  $if(author)$ {\large $author$}\\[0.5em] $endif$
+  $if(date)$ {\small $date$}\\[0.5em] $endif$
+\end{center}
+$endif$
+
+$body$
+
+\end{document}

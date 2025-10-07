@@ -1,32 +1,62 @@
 #!/bin/bash
-set -e
+# ===============================================================
+# md2pptx.sh
+# Markdown -> PPTX 转换脚本（自动检测 Mermaid；主题引用）
+# Usage:
+#   md2pptx.sh slides.md
+#   md2pptx.sh slides.md -o slides.pptx
+# ===============================================================
+set -euo pipefail
 
-INPUT=""
-OUTPUT=""
-METADATA=""
-
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --metadata) METADATA="$2"; shift 2 ;;
-        -*) echo "未知选项: $1"; exit 1 ;;
-        *)
-            if [ -z "$INPUT" ]; then INPUT="$1"
-            elif [ -z "$OUTPUT" ]; then OUTPUT="$1"; fi
-            shift ;;
-    esac
-done
-
-if [ -z "$INPUT" ]; then
-    echo "用法: md2pptx.sh input.md [output.pptx] [--metadata file.yaml]"
-    exit 1
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 <slides.md> [-o output.pptx] [extra pandoc args]"
+  exit 1
 fi
 
-[ -z "$OUTPUT" ] && OUTPUT="${INPUT%.md}.pptx"
+INPUT="$1"; shift || true
+OUTPUT="${INPUT%.md}.pptx"
 
-CMD="pandoc \"$INPUT\" -f gfm -t pptx --standalone"
-[ -n "$METADATA" ] && CMD="$CMD --metadata-file=\"$METADATA\""
-CMD="$CMD -o \"$OUTPUT\""
+# check -o
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -o) OUTPUT="$2"; shift 2;;
+    --) shift; break;;
+    *) break;;
+  esac
+done
 
-echo "正在转换: $INPUT -> $OUTPUT"
-eval $CMD
-echo "✅ 转换完成: $OUTPUT"
+FILTER_OPT=""
+if grep -q --fixed-strings '```mermaid' "$INPUT" 2>/dev/null || grep -q --perl-regexp '(?s)```mermaid.*?```' "$INPUT" 2>/dev/null; then
+  echo "🪄 Mermaid blocks found -> enabling pandoc-mermaid-filter"
+  FILTER_OPT="--filter pandoc-mermaid-filter"
+fi
+
+TPL_DIR="/opt/pandoc/templates"
+THEME_PPTX="$TPL_DIR/pptx_theme.pptx"  # 可选：如果存在则被引用
+
+PANDOC_THEME_ARG=""
+if [ -f "$THEME_PPTX" ]; then
+  echo "🎨 Using PPTX theme: $THEME_PPTX"
+  PANDOC_THEME_ARG="--reference-doc=$THEME_PPTX"
+fi
+
+echo "🎞 Converting $INPUT -> $OUTPUT"
+pandoc "$INPUT" \
+  --from markdown+yaml_metadata_block+smart \
+  --to pptx \
+  --resource-path="$(dirname "$INPUT")" \
+  --slide-level=2 \
+  --toc \
+  --metadata-file="meta.yaml" \
+  $FILTER_OPT \
+  $PANDOC_THEME_ARG \
+  "$@" \
+  -o "$OUTPUT"
+
+echo "✅ Done: $OUTPUT"
+
+# Examples:
+# 1) Basic:
+#    md2pptx.sh test/sample.md
+# 2) With custom output:
+#    md2pptx.sh test/sample.md -o out/presentation.pptx
