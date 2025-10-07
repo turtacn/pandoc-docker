@@ -60,48 +60,21 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get update && \
     apt-get install -y --no-install-recommends nodejs && \
     npm install -g @mermaid-js/mermaid-cli && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-
-# ------------------------------------------------------------------
-# 4.1 安装 Puppeteer (mermaid-cli) 所需依赖
-# ------------------------------------------------------------------
-RUN apt-get update && \
+    # Puppeteer 依赖
     apt-get install -y --no-install-recommends \
-    libasound2 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libc6 \
-    libcairo2 \
-    libcups2 \
-    libdbus-1-3 \
-    libexpat1 \
-    libfontconfig1 \
-    libgcc1 \
-    libgbm1 \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libstdc++6 \
-    libx11-6 \
-    libx11-xcb1 \
-    libxcb1 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxss1 \
-    libxtst6 \
-    fonts-noto-color-emoji \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+      libasound2 libatk1.0-0 libatk-bridge2.0-0 libc6 libcairo2 libcups2 \
+      libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libglib2.0-0 libgtk-3-0 \
+      libnspr4 libnss3 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 \
+      libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 \
+      libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 \
+      fonts-noto-color-emoji \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    # Puppeteer 无沙箱配置
+    echo '{ "args": ["--no-sandbox", "--disable-setuid-sandbox"] }' > /root/puppeteer-config.json && \
+    # 为 pandoc-mermaid-filter 创建兼容命令
+    echo '#!/bin/bash\nexec mmdc --puppeteerConfigFile /root/puppeteer-config.json "$@"' > /usr/local/bin/mermaid && \
+    chmod +x /usr/local/bin/mermaid
+
 
 
 # ------------------------------------------------------------------
@@ -135,11 +108,6 @@ RUN apt-get update && \
 WORKDIR /workspace
 
 RUN ln -s /usr/local/bin/pandoc-mermaid /usr/local/bin/pandoc-mermaid-filter
-## RUN ln -s /usr/bin/mmdc /usr/local/bin/mermaid
-# 创建兼容 mermaid 启动脚本（带 --no-sandbox）
-RUN echo '#!/bin/bash\nexec mmdc --no-sandbox --disable-setuid-sandbox "$@"' > /usr/local/bin/mermaid && \
-    chmod +x /usr/local/bin/mermaid
-
 
 # 复制配置文件和模板
 COPY templates /opt/pandoc/templates
