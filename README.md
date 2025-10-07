@@ -35,6 +35,12 @@ docker build -t jdcloudiaas/turta:pandoc .
 
 ```bash
 docker-compose run --rm jdcloudiaas/turta:pandoc /bin/bash
+
+
+# 或者
+
+docker run --rm -it -v "$(pwd)":/workspace -w /workspace jdcloudiaas/turta:pandoc /bin/bash
+
 ```
 
 进入容器后，你可以像在本地一样使用转换脚本：

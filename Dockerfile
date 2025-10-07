@@ -94,6 +94,10 @@ RUN apt-get update && \
 # 创建工作目录
 WORKDIR /workspace
 
+RUN ln -s /usr/local/bin/pandoc-mermaid /usr/local/bin/pandoc-mermaid-filter
+RUN ln -s /usr/bin/mmdc /usr/local/bin/mermaid
+
+
 # 复制配置文件和模板
 COPY templates /opt/pandoc/templates
 COPY scripts /opt/pandoc/scripts
