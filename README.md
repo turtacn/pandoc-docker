@@ -22,7 +22,7 @@
 docker-compose build
 
 # 或者使用原生 Docker 命令
-docker build -t my-pandoc:latest .
+docker build -t jdcloudiaas/turta:pandoc .
 ```
 
 ### 2\. 使用方法
@@ -34,7 +34,7 @@ docker build -t my-pandoc:latest .
 启动一个可以交互的容器，然后在其中执行转换命令。
 
 ```bash
-docker-compose run --rm pandoc /bin/bash
+docker-compose run --rm jdcloudiaas/turta:pandoc /bin/bash
 ```
 
 进入容器后，你可以像在本地一样使用转换脚本：
@@ -57,13 +57,13 @@ md2docx.sh test/sample.md
 
 ```bash
 # 转换 PDF
-docker-compose run --rm pandoc md2pdf.sh test/sample.md --toc
+docker-compose run --rm jdcloudiaas/turta:pandoc md2pdf.sh test/sample.md --toc
 
 # 转换 DOCX
-docker-compose run --rm pandoc md2docx.sh test/sample.md my-document.docx
+docker-compose run --rm jdcloudiaas/turta:pandoc md2docx.sh test/sample.md my-document.docx
 
 # 转换 PPTX
-docker-compose run --rm pandoc md2pptx.sh test/sample.md
+docker-compose run --rm jdcloudiaas/turta:pandoc md2pptx.sh test/sample.md
 ```
 
 ## 🛠️ 脚本使用详解
