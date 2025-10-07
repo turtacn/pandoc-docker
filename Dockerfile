@@ -63,6 +63,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+
 # ------------------------------------------------------------------
 # 5. 安装 Python 和 Pandoc 过滤器
 # ------------------------------------------------------------------
@@ -73,9 +74,9 @@ RUN apt-get update && \
     pandoc-tablenos \
     pandoc-fignos \
     pandoc-eqnos \
-    pandoc-mermaid && \
+    pandoc-mermaid-filter && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var-lib/apt/lists/*
 
 # ------------------------------------------------------------------
 # 6. 安装 LibreOffice (用于增强 docx/pptx 转换)

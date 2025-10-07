@@ -10,7 +10,7 @@ set -e
 INPUT=""
 OUTPUT=""
 METADATA=""
-FILTERS=("--filter" "pandoc-mermaid") # 默认启用 Mermaid 过滤器
+FILTERS=("--filter" "pandoc-mermaid-filter") # 默认启用 Mermaid 过滤器
 
 # --- 解析用户输入参数 ---
 while [[ $# -gt 0 ]]; do
