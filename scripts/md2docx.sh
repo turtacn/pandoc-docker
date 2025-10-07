@@ -1,57 +1,82 @@
 #!/bin/bash
-# ===============================================================
-# md2docx.sh
-# Markdown -> DOCX 转换脚本（自动检测 Mermaid；GitHub CSS）
-# Usage:
-#   md2docx.sh input.md
-#   md2docx.sh input.md -o output.docx
-# ===============================================================
-set -euo pipefail
+#
+# Pandoc Markdown to DOCX 转换脚本
+# 功能: 自动处理 Mermaid 图表。
+#
 
-if [ $# -lt 1 ]; then
-  echo "Usage: $0 <input.md> [-o output.docx] [extra pandoc args]"
-  exit 1
-fi
+set -e
 
-INPUT="$1"; shift || true
-OUTPUT="${INPUT%.md}.docx"
+# --- 参数初始化 ---
+INPUT=""
+OUTPUT=""
+TOC=false
+METADATA=""
+FILTERS=("--filter" "pandoc-mermaid") # 默认启用 Mermaid 过滤器
 
-# check -o
+# --- 解析用户输入参数 ---
 while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -o) OUTPUT="$2"; shift 2;;
-    --) shift; break;;
-    *) break;;
-  esac
+    case $1 in
+        --toc)
+            TOC=true
+            shift
+            ;;
+        --metadata)
+            METADATA="$2"
+            shift 2
+            ;;
+        -*)
+            echo "错误: 未知选项: $1" >&2
+            exit 1
+            ;;
+        *)
+            if [ -z "$INPUT" ]; then
+                INPUT="$1"
+            elif [ -z "$OUTPUT" ]; then
+                OUTPUT="$1"
+            fi
+            shift
+            ;;
+    esac
 done
 
-FILTER_OPT=""
-if grep -q --fixed-strings '```mermaid' "$INPUT" 2>/dev/null || grep -q --perl-regexp '(?s)```mermaid.*?```' "$INPUT" 2>/dev/null; then
-  echo "🪄 Mermaid blocks found -> enabling pandoc-mermaid-filter (mermaid will be embedded as images)"
-  FILTER_OPT="--filter pandoc-mermaid-filter"
+# --- 校验参数 ---
+if [ -z "$INPUT" ]; then
+    echo "错误: 请指定输入 Markdown 文件。"
+    echo "用法: md2docx.sh input.md [output.docx] [--toc] [--metadata file.yaml]"
+    exit 1
 fi
 
-TPL_DIR="/opt/pandoc/templates"
-CSS_FILE="$TPL_DIR/github.css"
-HIGHLIGHT="$TPL_DIR/pygments.theme"
+# 自动生成输出文件名
+if [ -z "$OUTPUT" ]; then
+    OUTPUT="${INPUT%.md}.docx"
+fi
 
-echo "📘 Converting $INPUT -> $OUTPUT"
-pandoc "$INPUT" \
-  --from markdown+yaml_metadata_block+smart \
-  --to docx \
-  --resource-path="$(dirname "$INPUT")" \
-  --css="$CSS_FILE" \
-  --highlight-style="$HIGHLIGHT" \
-  --toc \
-  --metadata-file="meta.yaml" \
-  $FILTER_OPT \
-  "$@" \
-  -o "$OUTPUT"
+# --- 构建 Pandoc 命令 ---
+CMD=(
+    "pandoc"
+    "$INPUT"
+    "-f" "gfm"
+    "-t" "docx"
+    "--standalone"
+)
 
-echo "✅ Done: $OUTPUT"
+# 目录
+if [ "$TOC" = true ]; then
+    CMD+=("--toc" "--toc-depth=3")
+fi
 
-# Examples:
-# 1) Basic:
-#    md2docx.sh test/sample.md
-# 2) Custom output:
-#    md2docx.sh test/sample.md -o out/report.docx
+# 元数据
+if [ -n "$METADATA" ]; then
+    CMD+=("--metadata-file=$METADATA")
+fi
+
+# 过滤器
+CMD+=("${FILTERS[@]}")
+
+# 输出
+CMD+=("-o" "$OUTPUT")
+
+# --- 执行命令 ---
+echo "pandoc-docker > 正在转换: $INPUT -> $OUTPUT"
+"${CMD[@]}"
+echo "pandoc-docker > ✅ 转换完成: $OUTPUT"

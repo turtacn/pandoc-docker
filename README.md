@@ -1,119 +1,131 @@
-# pandoc-docker
+# 高度定制化的 Pandoc 容器
 
-> 镜像：`jdcloudiaas/turta:pandoc`
+这是一个生产级的 Pandoc 容器镜像，旨在提供一个功能强大、开箱即用的 Markdown 文档转换环境。
 
-这是一个高度集成、支持中文与 Mermaid 的 Pandoc 容器镜像工程。镜像支持将 Markdown 转换为 PDF / DOCX / PPTX，包含：
+## ✨ 核心特性
 
-- 中文渲染（XeLaTeX + Noto CJK 等字体）
-- Mermaid 图表自动检测与渲染（使用 mermaid-cli + pandoc-mermaid-filter）
-- GitHub 风格 CSS 支持（用于 HTML/epub 风格渲染）
-- Pandoc 常用 filters（crossref、fignos、eqnos、tablenos）
-- LibreOffice（增强 DOCX/PPTX 兼容）
+- **全面的中文支持**: 内置多种高质量中文字体（思源黑体、思源宋体、文泉驿等），完美解决中文渲染问题。
+- **Mermaid 图表渲染**: 自动将 Markdown 中的 Mermaid 代码块转换为矢量图并嵌入到 PDF、DOCX 等文件中。
+- **优雅的格式转换**: 提供 `md2pdf`, `md2docx`, `md2pptx` 等便捷脚本，支持丰富的自定义选项。
+- **GitHub 风格**: 为代码高亮和 CSS 样式提供类似 GitHub 的现代化外观。
+- **生产级依赖**: 集成了最新版 Pandoc、XeLaTeX、Node.js、Python 过滤器和 LibreOffice，确保兼容性和稳定性。
+- **高度可定制**: 所有模板、样式和脚本均可轻松修改和扩展。
 
-## 目录结构
+## 🚀 快速开始
 
-````
+### 1. 构建镜像
 
-pandoc-docker/
-├── Dockerfile
-├── LICENSE
-├── README.md
-├── docker-compose.yml
-├── scripts
-│   ├── md2docx.sh
-│   ├── md2pdf.sh
-│   └── md2pptx.sh
-├── templates
-│   ├── bullet_style.tex
-│   ├── chapter_break.tex
-│   ├── cover.tex
-│   ├── epub.css
-│   ├── github.css
-│   ├── inline_code.tex
-│   ├── meta.tex
-│   ├── pygments.theme
-│   └── quote.tex
-└── test
-└── sample.md
-
-````
-
-## 为什么有这个项目
-
-很多团队需要将技术文档或报告从 Markdown 转换为不同格式（PDF / DOCX / PPTX），同时希望：
-
-- 保持 GitHub 风格的 Markdown 渲染
-- 支持中文、公式和 SVG/mermaid 图
-- 在 CI 环境或容器中一键完成转换
-
-本镜像将所有必要工具打包，方便在 CI/CD、容器集群或本地进行统一转换。
-
-## 如何使用
-
-### 1) 构建镜像
+在项目根目录下执行：
 
 ```bash
-docker build -t jdcloudiaas/turta:pandoc .
-````
+# 使用 Docker Compose 构建 (推荐)
+docker-compose build
 
-或者使用 docker-compose:
-
-```bash
-docker compose up --build -d
-# 之后进入容器：
-docker exec -it pandoc-turta /bin/bash
+# 或者使用原生 Docker 命令
+docker build -t my-pandoc:latest .
 ```
 
-### 2) 将脚本与模板拷贝到容器（本仓库组织后已包含）
+### 2\. 使用方法
 
-确保 `scripts/` 与 `templates/` 已复制到镜像内的 `/opt/pandoc/scripts` 与 `/opt/pandoc/templates`：
-（如果你使用 `docker build`，可以在 Dockerfile 构建时 `COPY` 这些文件；上面的 Dockerfile 为骨架，建议在你的项目 Dockerfile 中加入 `COPY templates /opt/pandoc/templates` 与 `COPY scripts /opt/pandoc/scripts`）
+推荐将你的 Markdown 文档放在项目根目录或子目录中，因为该目录已挂载到容器的 `/workspace`。
 
-### 3) 在项目根目录运行示例
+#### 方法一：交互式 Shell (推荐)
 
+启动一个可以交互的容器，然后在其中执行转换命令。
 
 ```bash
-# 交互式运行
-docker run -it --rm -v $(pwd):/workspace jdcloudiaas/turta:pandoc
-
-# 直接转换
-docker run --rm -v $(pwd):/workspace jdcloudiaas/turta:pandoc md2pdf.sh input.md
+docker-compose run --rm pandoc /bin/bash
 ```
 
-本仓库包含示例 `test/sample.md`：
-
-生成 PDF（自动检测 Mermaid）：
+进入容器后，你可以像在本地一样使用转换脚本：
 
 ```bash
-./scripts/md2pdf.sh test/sample.md
-# 或者在容器中：
+# 在容器内执行:
+# 基本的 PDF 转换
 md2pdf.sh test/sample.md
+
+# 生成带目录的 PDF
+md2pdf.sh test/sample.md my-document.pdf --toc
+
+# 转换成 DOCX
+md2docx.sh test/sample.md
 ```
 
-生成 DOCX：
+#### 方法二：直接执行命令
+
+直接在宿主机上运行转换命令，容器执行完毕后会自动销毁。
 
 ```bash
-./scripts/md2docx.sh test/sample.md
+# 转换 PDF
+docker-compose run --rm pandoc md2pdf.sh test/sample.md --toc
+
+# 转换 DOCX
+docker-compose run --rm pandoc md2docx.sh test/sample.md my-document.docx
+
+# 转换 PPTX
+docker-compose run --rm pandoc md2pptx.sh test/sample.md
 ```
 
-生成 PPTX（slide-level=2）：
+## 🛠️ 脚本使用详解
+
+### `md2pdf.sh`
+
+将 Markdown 转换为高质量的 PDF 文档。
+
+**用法**: `md2pdf.sh <input.md> [output.pdf] [options]`
+
+**选项**:
+
+  - `--toc`: 生成文档目录。
+  - `--cover`: 添加封面页 (需在元数据中定义 `title`, `author` 并提供 `cover.png`)。
+  - `--metadata <file.yaml>`: 指定一个 YAML 元数据文件。
+  - `--filter <filter-name>`: 添加一个 Pandoc 过滤器 (例如 `pandoc-crossref`)。
+
+**示例**:
 
 ```bash
-./scripts/md2pptx.sh test/sample.md
+# 生成带目录和封面的 PDF
+md2pdf.sh my-book.md --toc --cover
+
+# 合并多个文件并使用元数据
+md2pdf.sh chapter1.md book.pdf chapter2.md --toc --metadata meta.yaml
 ```
 
-### 4) 参数说明（脚本通用）
+### `md2docx.sh`
 
-* `-o <file>`：指定输出文件名
-* 额外的 Pandoc 参数可直接追加到脚本命令后，例如 `--variable mainfont="Noto Sans CJK SC"`，或 `--toc=false` 取消目录。
+将 Markdown 转换为 Word (`.docx`) 文档。
 
-### 5) Mermaid 支持说明
+**用法**: `md2docx.sh <input.md> [output.docx] [options]`
 
-脚本会自动检测文件中是否包含 ```mermaid 块。如果有，脚本会启用 `pandoc-mermaid-filter`，该 filter 会调用 `mmdc`（mermaid-cli）生成图片并在生成文档时嵌入。
+**选项**:
 
-### 6) 常见问题
+  - `--toc`: 在 Word 文档开头插入目录。
+  - `--metadata <file.yaml>`: 指定元数据文件。
 
-* **中文字体缺失或显示异常**：请确认容器中安装了 Noto CJK 系列字体，或在 `--variable mainfont` 中指定可用字体。
-* **Mermaid 图未显示**：检查 `pandoc-mermaid-filter` 是否存在（镜像中已安装），以及 `mmdc` 是否可用；在转换时可加 `--log` 查看详细信息。
-* **pptx 样式想自定义**：将自定义 PPTX 模板 `pptx_theme.pptx` 放入 `templates/`，脚本会自动引用（若存在）。
+**示例**:
 
+```bash
+md2docx.sh report.md --toc
+```
+
+### `md2pptx.sh`
+
+将 Markdown 转换为 PowerPoint (`.pptx`) 演示文稿。
+
+**用法**: `md2pptx.sh <input.md> [output.pptx]`
+
+> **注意**: PPTX 转换遵循 Pandoc 的标准，每个一级标题 (`#`) 或二级标题 (`##`) 默认为一张新的幻灯片，具体取决于文档结构。
+
+**示例**:
+
+```bash
+md2pptx.sh presentation.md
+```
+
+## 🎨 定制化
+
+你可以通过修改 `templates` 目录下的文件来改变输出文档的外观。
+
+  - **`templates/pygments.theme`**: JSON 格式的代码高亮主题。
+  - **`templates/github.css`**: 用于 HTML 相关输出的 CSS 样式。
+  - **`templates/*.tex`**: 用于 PDF 输出的 LaTeX 宏包和样式定义。例如，`quote.tex` 定义了引用块的样式。

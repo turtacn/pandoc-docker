@@ -1,62 +1,72 @@
 #!/bin/bash
-# ===============================================================
-# md2pptx.sh
-# Markdown -> PPTX 转换脚本（自动检测 Mermaid；主题引用）
-# Usage:
-#   md2pptx.sh slides.md
-#   md2pptx.sh slides.md -o slides.pptx
-# ===============================================================
-set -euo pipefail
+#
+# Pandoc Markdown to PPTX 转换脚本
+# 功能: 自动处理 Mermaid 图表。
+#
 
-if [ $# -lt 1 ]; then
-  echo "Usage: $0 <slides.md> [-o output.pptx] [extra pandoc args]"
-  exit 1
-fi
+set -e
 
-INPUT="$1"; shift || true
-OUTPUT="${INPUT%.md}.pptx"
+# --- 参数初始化 ---
+INPUT=""
+OUTPUT=""
+METADATA=""
+FILTERS=("--filter" "pandoc-mermaid") # 默认启用 Mermaid 过滤器
 
-# check -o
+# --- 解析用户输入参数 ---
 while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -o) OUTPUT="$2"; shift 2;;
-    --) shift; break;;
-    *) break;;
-  esac
+    case $1 in
+        --metadata)
+            METADATA="$2"
+            shift 2
+            ;;
+        -*)
+            echo "错误: 未知选项: $1" >&2
+            exit 1
+            ;;
+        *)
+            if [ -z "$INPUT" ]; then
+                INPUT="$1"
+            elif [ -z "$OUTPUT" ]; then
+                OUTPUT="$1"
+            fi
+            shift
+            ;;
+    esac
 done
 
-FILTER_OPT=""
-if grep -q --fixed-strings '```mermaid' "$INPUT" 2>/dev/null || grep -q --perl-regexp '(?s)```mermaid.*?```' "$INPUT" 2>/dev/null; then
-  echo "🪄 Mermaid blocks found -> enabling pandoc-mermaid-filter"
-  FILTER_OPT="--filter pandoc-mermaid-filter"
+# --- 校验参数 ---
+if [ -z "$INPUT" ]; then
+    echo "错误: 请指定输入 Markdown 文件。"
+    echo "用法: md2pptx.sh input.md [output.pptx] [--metadata file.yaml]"
+    exit 1
 fi
 
-TPL_DIR="/opt/pandoc/templates"
-THEME_PPTX="$TPL_DIR/pptx_theme.pptx"  # 可选：如果存在则被引用
-
-PANDOC_THEME_ARG=""
-if [ -f "$THEME_PPTX" ]; then
-  echo "🎨 Using PPTX theme: $THEME_PPTX"
-  PANDOC_THEME_ARG="--reference-doc=$THEME_PPTX"
+# 自动生成输出文件名
+if [ -z "$OUTPUT" ]; then
+    OUTPUT="${INPUT%.md}.pptx"
 fi
 
-echo "🎞 Converting $INPUT -> $OUTPUT"
-pandoc "$INPUT" \
-  --from markdown+yaml_metadata_block+smart \
-  --to pptx \
-  --resource-path="$(dirname "$INPUT")" \
-  --slide-level=2 \
-  --toc \
-  --metadata-file="meta.yaml" \
-  $FILTER_OPT \
-  $PANDOC_THEME_ARG \
-  "$@" \
-  -o "$OUTPUT"
+# --- 构建 Pandoc 命令 ---
+CMD=(
+    "pandoc"
+    "$INPUT"
+    "-f" "gfm"
+    "-t" "pptx"
+    "--standalone"
+)
 
-echo "✅ Done: $OUTPUT"
+# 元数据
+if [ -n "$METADATA" ]; then
+    CMD+=("--metadata-file=$METADATA")
+fi
 
-# Examples:
-# 1) Basic:
-#    md2pptx.sh test/sample.md
-# 2) With custom output:
-#    md2pptx.sh test/sample.md -o out/presentation.pptx
+# 过滤器
+CMD+=("${FILTERS[@]}")
+
+# 输出
+CMD+=("-o" "$OUTPUT")
+
+# --- 执行命令 ---
+echo "pandoc-docker > 正在转换: $INPUT -> $OUTPUT"
+"${CMD[@]}"
+echo "pandoc-docker > ✅ 转换完成: $OUTPUT"

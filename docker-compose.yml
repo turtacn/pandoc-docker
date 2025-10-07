@@ -1,13 +1,20 @@
-version: "3.8"
+version: '3.8'
+
 services:
   pandoc:
-    image: jdcloudiaas/turta:pandoc
-    container_name: pandoc-turta
-    tty: true
-    stdin_open: true
+    # 使用你构建的镜像名称
+    image: my-pandoc:latest
+    build: .
+    # 将当前目录挂载到容器的 /workspace 目录
+    # 你也可以指定一个子目录, 如 ./documents:/workspace
     volumes:
-      - ./:/workspace
+      - .:/workspace
+    # 设置工作目录
     working_dir: /workspace
-    environment:
-      - LANG=zh_CN.UTF-8
-    command: /bin/bash
+    # 覆盖默认命令, 使容器保持运行 (用于交互式调试)
+    # command: tail -f /dev/null
+    # 如果要直接运行, 请注释掉 command, 然后使用 docker-compose run
+
+    # 保持标准输入打开并分配一个伪终端
+    stdin_open: true
+    tty: true
