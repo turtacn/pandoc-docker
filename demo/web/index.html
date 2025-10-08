@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pandoc-Docker - 下一代文档转换平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#69b1ff',
+                        success: '#36D399',
+                        warning: '#FBBD23',
+                        danger: '#F87272',
+                        dark: '#1F2937',
+                        'dark-light': '#374151',
+                        light: '#F9FAFB'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-gradient {
+                background-clip: text;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+            .animate-float {
+                animation: float 6s ease-in-out infinite;
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-8px);
+            }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-dark">
+<!-- 导航栏 -->
+<header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300 bg-white/90 backdrop-blur-md shadow-sm">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                    <i class="fa fa-file-text-o text-white text-xl"></i>
+                </div>
+                <span class="text-xl font-bold text-dark">Pandoc-Docker</span>
+            </div>
+
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="#features" class="text-dark-light hover:text-primary transition-colors">特性</a>
+                <a href="#examples" class="text-dark-light hover:text-primary transition-colors">示例</a>
+                <a href="#roadmap" class="text-dark-light hover:text-primary transition-colors">未来路线</a>
+                <a href="#contribute" class="text-dark-light hover:text-primary transition-colors">参与贡献</a>
+                <a href="https://github.com/turtacn/pandoc-docker" target="_blank" class="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors">
+                    <i class="fa fa-github"></i>
+                    <span>GitHub</span>
+                </a>
+            </nav>
+
+            <button class="md:hidden text-dark" id="menu-toggle">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 移动端菜单 -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+        <div class="container mx-auto px-4 py-3 space-y-3">
+            <a href="#features" class="block text-dark-light hover:text-primary transition-colors py-2">特性</a>
+            <a href="#examples" class="block text-dark-light hover:text-primary transition-colors py-2">示例</a>
+            <a href="#roadmap" class="block text-dark-light hover:text-primary transition-colors py-2">未来路线</a>
+            <a href="#contribute" class="block text-dark-light hover:text-primary transition-colors py-2">参与贡献</a>
+            <a href="https://github.com/turtacn/pandoc-docker" target="_blank" class="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors py-2">
+                <i class="fa fa-github"></i>
+                <span>GitHub</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- 英雄区域 -->
+<section class="pt-32 pb-20 md:pt-40 md:pb-28 bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 mb-10 md:mb-0">
+                <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight mb-6">
+                    让文档转换<br>
+                    <span class="bg-gradient-to-r from-primary to-blue-400 text-gradient">简单而强大</span>
+                </h1>
+                <p class="text-lg text-dark-light mb-8 max-w-lg">
+                    Pandoc-Docker 提供一站式文档转换解决方案，完美支持中文排版、Mermaid图表和多格式转换，让您的文档工作流更高效。
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="#quickstart" class="px-6 py-3 bg-primary text-white rounded-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-1 transition-all font-medium">
+                        快速开始
+                    </a>
+                    <a href="https://github.com/turtacn/pandoc-docker" target="_blank" class="px-6 py-3 bg-white text-primary border border-primary rounded-lg hover:bg-primary/5 hover:-translate-y-1 transition-all font-medium">
+                        <i class="fa fa-github mr-2"></i> GitHub
+                    </a>
+                </div>
+                <div class="mt-10 flex items-center space-x-4">
+                    <div class="flex -space-x-2">
+                        <img src="https://picsum.photos/id/1/40/40" alt="贡献者" class="w-10 h-10 rounded-full border-2 border-white">
+                        <img src="https://picsum.photos/id/2/40/40" alt="贡献者" class="w-10 h-10 rounded-full border-2 border-white">
+                        <img src="https://picsum.photos/id/3/40/40" alt="贡献者" class="w-10 h-10 rounded-full border-2 border-white">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-sm font-medium text-dark-light">
+                            +24
+                        </div>
+                    </div>
+                    <p class="text-sm text-dark-light">已有 28 位贡献者参与</p>
+                </div>
+            </div>
+            <div class="md:w-1/2 relative">
+                <div class="relative z-10 animate-float">
+                    <img src="https://picsum.photos/id/2/600/400" alt="文档转换演示" class="rounded-xl shadow-2xl">
+                    <div class="absolute -bottom-5 -right-5 bg-white p-3 rounded-lg shadow-lg">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-full bg-success animate-pulse"></div>
+                            <span class="font-medium">实时转换中</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/20 rounded-full blur-3xl -z-10"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 核心特性 -->
+<section id="features" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">强大特性，一站式解决</h2>
+            <p class="text-dark-light max-w-2xl mx-auto text-lg">Pandoc-Docker 集成了一系列强大功能，让文档转换从未如此简单</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- 特性卡片 1 -->
+            <div class="bg-light rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                    <i class="fa fa-language text-primary text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">全面中文支持</h3>
+                <p class="text-dark-light">内置思源黑体、思源宋体、文泉驿等高质量中文字体，完美解决中文渲染问题，让排版更美观。</p>
+            </div>
+
+            <!-- 特性卡片 2 -->
+            <div class="bg-light rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                    <i class="fa fa-sitemap text-primary text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">Mermaid 图表渲染</h3>
+                <p class="text-dark-light">自动将 Markdown 中的 Mermaid 代码块转换为矢量图，无缝嵌入到 PDF、DOCX 等各种文件格式中。</p>
+            </div>
+
+            <!-- 特性卡片 3 -->
+            <div class="bg-light rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                    <i class="fa fa-exchange text-primary text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">多格式转换脚本</h3>
+                <p class="text-dark-light">提供 md2pdf、md2docx、md2pptx 等便捷脚本，支持目录、封面、元数据等丰富的自定义选项。</p>
+            </div>
+
+            <!-- 特性卡片 4 -->
+            <div class="bg-light rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                    <i class="fa fa-github text-primary text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">GitHub 风格</h3>
+                <p class="text-dark-light">代码高亮和 CSS 样式采用 GitHub 风格设计，让您的文档保持一致的现代化外观。</p>
+            </div>
+
+            <!-- 特性卡片 5 -->
+            <div class="bg-light rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                    <i class="fa fa-cogs text-primary text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">生产级依赖</h3>
+                <p class="text-dark-light">集成最新版 Pandoc、XeLaTeX、Node.js、Python 过滤器和 LibreOffice，确保兼容性和稳定性。</p>
+            </div>
+
+            <!-- 特性卡片 6 -->
+            <div class="bg-light rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-5">
+                    <i class="fa fa-sliders text-primary text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">高度可定制</h3>
+                <p class="text-dark-light">所有模板、样式和脚本均可轻松修改和扩展，满足您的个性化需求和品牌风格。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 快速开始 -->
+<section id="quickstart" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">快速开始</h2>
+            <p class="text-dark-light max-w-2xl mx-auto text-lg">只需几步，即可开始使用 Pandoc-Docker 提升您的文档工作流</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden max-w-4xl mx-auto">
+            <div class="flex flex-col md:flex-row">
+                <div class="md:w-1/3 bg-primary p-8 text-white">
+                    <h3 class="text-xl font-semibold mb-6">使用步骤</h3>
+                    <ul class="space-y-6">
+                        <li class="flex items-start">
+                            <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center mr-3 mt-1 flex-shrink-0">1</div>
+                            <span>构建 Docker 镜像</span>
+                        </li>
+                        <li class="flex items-start">
+                            <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center mr-3 mt-1 flex-shrink-0">2</div>
+                            <span>启动交互式容器</span>
+                        </li>
+                        <li class="flex items-start">
+                            <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center mr-3 mt-1 flex-shrink-0">3</div>
+                            <span>运行转换命令</span>
+                        </li>
+                        <li class="flex items-start">
+                            <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center mr-3 mt-1 flex-shrink-0">4</div>
+                            <span>获取转换结果</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="md:w-2/3 p-8">
+                    <h4 class="text-lg font-medium mb-4">构建镜像</h4>
+                    <div class="bg-gray-900 text-gray-300 p-4 rounded-lg font-mono text-sm mb-6 overflow-x-auto">
+                            <pre># 使用 Docker Compose 构建 (推荐)
+docker-compose build
+
+# 或者使用原生 Docker 命令
+docker build -t jdcloudiaas/turta:pandoc .</pre>
+                    </div>
+
+                    <h4 class="text-lg font-medium mb-4">运行容器并转换文档</h4>
+                    <div class="bg-gray-900 text-gray-300 p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                            <pre># 启动交互式 Shell
+docker-compose run --rm jdcloudiaas/turta:pandoc /bin/bash
+
+# 在容器内执行转换命令
+md2pdf.sh test/sample.md          # 基本的 PDF 转换
+md2pdf.sh test/sample.md --toc    # 生成带目录的 PDF
+md2docx.sh test/sample.md         # 转换成 DOCX
+md2pptx.sh presentation.md        # 转换成 PPTX</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 使用示例 -->
+<section id="examples" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">转换效果展示</h2>
+            <p class="text-dark-light max-w-2xl mx-auto text-lg">看看 Pandoc-Docker 如何轻松处理各种复杂文档元素</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- 示例 1: Markdown 源文件 -->
+            <div>
+                <div class="bg-gray-900 text-white p-3 rounded-t-lg flex items-center">
+                    <i class="fa fa-file-code-o mr-2"></i>
+                    <span>sample.md (源文件)</span>
+                </div>
+                <div class="border border-gray-200 border-t-0 rounded-b-lg p-6 bg-light h-full">
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-medium text-dark">元数据与封面</h4>
+                            <div class="bg-gray-100 p-3 rounded-md text-sm font-mono text-gray-700 mt-2">
+                                    <pre>---
+title: "Pandoc 容器功能测试文档"
+author: "技术部"
+date: "2025年10月07日"
+coverimage: "cover.png"
+---</pre>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="font-medium text-dark">中文与英文混合排版</h4>
+                            <div class="bg-gray-100 p-3 rounded-md text-sm mt-2">
+                                <p>This is a paragraph containing both English and Chinese.
+                                    这是一段包含英文和中文的段落。我们希望字体能够优雅地处理混合排版，
+                                    例如 <code>inline code</code>（行内代码）和<strong>粗体</strong>、<em>斜体</em>等样式。</p>
+
+                                <blockquote class="border-l-4 border-primary pl-3 italic my-3">
+                                    这是一个引用块。它应该有特殊的背景和边框样式，以区别于普通文本。
+                                </blockquote>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="font-medium text-dark">代码高亮</h4>
+                            <div class="bg-gray-100 p-3 rounded-md text-sm font-mono text-gray-700 mt-2 overflow-x-auto">
+                                    <pre><code class="language-python"># 这是一个 Python 注释
+def greet(name: str) -> str:
+    """一个简单的问候函数"""
+    message = f"你好, {name}!"
+    print(message)
+    return message
+
+greet("世界")</code></pre>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="font-medium text-dark">Mermaid 图表</h4>
+                            <div class="bg-gray-100 p-3 rounded-md text-sm font-mono text-gray-700 mt-2 overflow-x-auto">
+                                    <pre><code class="language-mermaid">graph TD
+    A[开始] --> B{检查环境};
+    B -->|环境OK| C[执行转换];
+    B -->|环境失败| D[报错退出];
+    C --> E[生成 PDF];
+    C --> F[生成 DOCX];
+    E --> G{检查文件};
+    F --> G;
+    G --> H[任务结束];</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 示例 2: 转换结果 -->
+            <div>
+                <div class="bg-primary text-white p-3 rounded-t-lg flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fa fa-file-pdf-o mr-2"></i>
+                        <span>转换结果 (PDF)</span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="bg-white/20 hover:bg-white/30 p-1 rounded transition-colors">
+                            <i class="fa fa-file-pdf-o"></i>
+                        </button>
+                        <button class="bg-white/20 hover:bg-white/30 p-1 rounded transition-colors">
+                            <i class="fa fa-file-word-o"></i>
+                        </button>
+                        <button class="bg-white/20 hover:bg-white/30 p-1 rounded transition-colors">
+                            <i class="fa fa-file-powerpoint-o"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="border border-gray-200 border-t-0 rounded-b-lg p-6 h-full">
+                    <div class="bg-white rounded-lg shadow-md p-8 aspect-[4/3] relative overflow-hidden">
+                        <!-- 模拟PDF页面 -->
+                        <div class="absolute top-0 left-0 right-0 h-24 bg-primary/10 flex items-center justify-center">
+                            <h3 class="text-xl font-semibold">Pandoc 容器功能测试文档</h3>
+                        </div>
+                        <div class="pt-32">
+                            <h4 class="text-lg font-medium mb-2">一级标题：中文与 Mermaid 支持</h4>
+                            <h5 class="text-base font-medium text-dark-light mb-3">英文和中文混合排版</h5>
+
+                            <p class="mb-4 text-sm">
+                                This is a paragraph containing both English and Chinese.
+                                这是一段包含英文和中文的段落。我们希望字体能够优雅地处理混合排版，
+                                例如 <code class="bg-gray-100 px-1 py-0.5 rounded">inline code</code>（行内代码）和<strong>粗体</strong>、<em>斜体</em>等样式。
+                            </p>
+
+                            <div class="bg-gray-50 border-l-4 border-primary p-3 mb-4 text-sm italic">
+                                这是一个引用块。它应该有特殊的背景和边框样式，以区别于普通文本。<br>
+                                Blockquotes should be beautifully rendered.
+                            </div>
+
+                            <h5 class="text-base font-medium text-dark-light mb-3">代码高亮测试</h5>
+                            <div class="bg-gray-900 text-gray-300 p-3 rounded text-xs font-mono mb-4 overflow-x-auto">
+                                    <pre># 这是一个 Python 注释
+def greet(name: str) -> str:
+    """一个简单的问候函数"""
+    message = f"你好, {name}!"
+    print(message)
+    return message
+
+greet("世界")</pre>
+                            </div>
+
+                            <div class="mt-6">
+                                <h5 class="text-base font-medium text-dark-light mb-3">Mermaid 图表渲染结果</h5>
+                                <div class="border border-gray-200 rounded p-4 bg-white">
+                                    <img src="https://picsum.photos/id/24/500/200" alt="Mermaid 图表示例" class="rounded">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 未来路线图 -->
+<section id="roadmap" class="py-20 bg-gradient-to-br from-dark to-dark-light text-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">AI 时代的文档转换未来</h2>
+            <p class="text-gray-300 max-w-2xl mx-auto text-lg">我们正在规划一系列激动人心的功能，将 AI 与文档转换深度融合</p>
+        </div>
+
+        <div class="relative">
+            <!-- 时间线中轴线 -->
+            <div class="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-primary/30"></div>
+
+            <!-- 时间线项目 -->
+            <div class="space-y-20">
+                <!-- 2023 Q4 -->
+                <div class="relative flex flex-col md:flex-row items-center">
+                    <div class="md:w-1/2 md:pr-12 md:text-right order-2 md:order-1 mt-6 md:mt-0">
+                        <h3 class="text-xl font-semibold mb-2">基础功能强化</h3>
+                        <p class="text-gray-300">完善中文排版引擎，优化 Mermaid 图表渲染质量，增加更多格式转换选项</p>
+                    </div>
+                    <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-primary flex items-center justify-center z-10 order-1 md:order-2">
+                        <i class="fa fa-check"></i>
+                    </div>
+                    <div class="md:w-1/2 md:pl-12 hidden md:block order-3"></div>
+                    <div class="md:hidden text-sm text-gray-400 order-0">2023 Q4</div>
+                    <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 -top-8 text-sm text-gray-400">2023 Q4</div>
+                </div>
+
+                <!-- 2024 Q2 -->
+                <div class="relative flex flex-col md:flex-row items-center">
+                    <div class="md:w-1/2 md:pr-12 hidden md:block order-1"></div>
+                    <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-primary flex items-center justify-center z-10 order-2">
+                        <i class="fa fa-cog"></i>
+                    </div>
+                    <div class="md:w-1/2 md:pl-12 order-3 mt-6 md:mt-0">
+                        <h3 class="text-xl font-semibold mb-2">AI 辅助编辑</h3>
+                        <p class="text-gray-300">集成大语言模型，提供语法检查、风格统一、内容摘要等 AI 辅助功能，提升文档质量</p>
+                    </div>
+                    <div class="md:hidden text-sm text-gray-400 order-0">2024 Q2</div>
+                    <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 -top-8 text-sm text-gray-400">2024 Q2</div>
+                </div>
+
+                <!-- 2024 Q4 -->
+                <div class="relative flex flex-col md:flex-row items-center">
+                    <div class="md:w-1/2 md:pr-12 md:text-right order-2 md:order-1 mt-6 md:mt-0">
+                        <h3 class="text-xl font-semibold mb-2">智能格式转换</h3>
+                        <p class="text-gray-300">利用 AI 分析文档结构和内容，实现更智能的格式转换，自动调整布局以适应目标格式</p>
+                    </div>
+                    <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-primary/70 flex items-center justify-center z-10 order-1 md:order-2">
+                        <i class="fa fa-magic"></i>
+                    </div>
+                    <div class="md:w-1/2 md:pl-12 hidden md:block order-3"></div>
+                    <div class="md:hidden text-sm text-gray-400 order-0">2024 Q4</div>
+                    <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 -top-8 text-sm text-gray-400">2024 Q4</div>
+                </div>
+
+                <!-- 2025 Q2 -->
+                <div class="relative flex flex-col md:flex-row items-center">
+                    <div class="md:w-1/2 md:pr-12 hidden md:block order-1"></div>
+                    <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center z-10 order-2">
+                        <i class="fa fa-lightbulb-o"></i>
+                    </div>
+                    <div class="md:w-1/2 md:pl-12 order-3 mt-6 md:mt-0">
+                        <h3 class="text-xl font-semibold mb-2">内容理解与生成</h3>
+                        <p class="text-gray-300">基于文档内容自动生成摘要、目录、图表和注释，支持多语言翻译和本地化</p>
+                    </div>
+                    <div class="md:hidden text-sm text-gray-400 order-0">2025 Q2</div>
+                    <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 -top-8 text-sm text-gray-400">2025 Q2</div>
+                </div>
+
+                <!-- 2025 Q4 -->
+                <div class="relative flex flex-col md:flex-row items-center">
+                    <div class="md:w-1/2 md:pr-12 md:text-right order-2 md:order-1 mt-6 md:mt-0">
+                        <h3 class="text-xl font-semibold mb-2">协作式 AI 工作流</h3>
+                        <p class="text-gray-300">实现多人实时协作编辑，AI 辅助版本控制，智能合并不同作者的文档更改</p>
+                    </div>
+                    <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center z-10 order-1 md:order-2">
+                        <i class="fa fa-users"></i>
+                    </div>
+                    <div class="md:w-1/2 md:pl-12 hidden md:block order-3"></div>
+                    <div class="md:hidden text-sm text-gray-400 order-0">2025 Q4</div>
+                    <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 -top-8 text-sm text-gray-400">2025 Q4</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI 集成亮点 -->
+        <div class="mt-20">
+            <h3 class="text-2xl font-bold text-center mb-10">AI 驱动的创新功能</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                    <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fa fa-file-text text-primary text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold mb-2">智能文档摘要</h4>
+                    <p class="text-gray-300 text-sm">基于文档内容自动生成精准摘要，提取关键信息和要点，节省阅读时间</p>
+                </div>
+
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                    <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fa fa-language text-primary text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold mb-2">多语言智能转换</h4>
+                    <p class="text-gray-300 text-sm">在格式转换的同时进行高质量翻译，保持文档布局和格式的一致性</p>
+                </div>
+
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                    <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fa fa-bar-chart text-primary text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold mb-2">数据驱动图表生成</h4>
+                    <p class="text-gray-300 text-sm">分析文档中的数据，自动生成合适的图表，并支持交互式可视化展示</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 参与贡献 -->
+<section id="contribute" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">加入我们，一起打造未来</h2>
+            <p class="text-dark-light max-w-2xl mx-auto text-lg">无论您是开发者、设计师还是文档爱好者，都可以为项目贡献力量</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center mb-16">
+            <div>
+                <h3 class="text-2xl font-semibold mb-6">如何贡献</h3>
+                <div class="space-y-6">
+                    <div class="flex">
+                        <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0">
+                            <i class="fa fa-code text-primary"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-lg mb-1">代码贡献</h4>
+                            <p class="text-dark-light">改进转换脚本、修复漏洞、添加新功能或优化性能</p>
+                        </div>
+                    </div>
+
+                    <div class="flex">
+                        <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0">
+                            <i class="fa fa-paint-brush text-primary"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-lg mb-1">样式与模板</h4>
+                            <p class="text-dark-light">设计新的CSS样式、LaTeX模板或代码高亮主题</p>
+                        </div>
+                    </div>
+
+                    <div class="flex">
+                        <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0">
+                            <i class="fa fa-book text-primary"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-lg mb-1">文档与示例</h4>
+                            <p class="text-dark-light">完善文档、添加使用示例或撰写教程文章</p>
+                        </div>
+                    </div>
+
+                    <div class="flex">
+                        <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0">
+                            <i class="fa fa-lightbulb-o text-primary"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-lg mb-1">创意与建议</h4>
+                            <p class="text-dark-light">提出新功能想法、改进建议或报告问题</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-light rounded-2xl p-8 shadow-sm">
+                <h3 class="text-xl font-semibold mb-6">开始贡献的步骤</h3>
+                <ol class="space-y-4">
+                    <li class="flex">
+                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center mr-3 flex-shrink-0">1</div>
+                        <p>在 GitHub 上 <a href="#" class="text-primary hover:underline">Fork</a> 本项目</p>
+                    </li>
+                    <li class="flex">
+                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center mr-3 flex-shrink-0">2</div>
+                        <p>克隆到本地并创建您的特性分支: <code class="bg-gray-100 px-1 py-0.5 rounded text-sm">git checkout -b my-new-feature</code></p>
+                    </li>
+                    <li class="flex">
+                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center mr-3 flex-shrink-0">3</div>
+                        <p>提交您的更改: <code class="bg-gray-100 px-1 py-0.5 rounded text-sm">git commit -m 'Add some feature'</code></p>
+                    </li>
+                    <li class="flex">
+                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center mr-3 flex-shrink-0">4</div>
+                        <p>推送到分支: <code class="bg-gray-100 px-1 py-0.5 rounded text-sm">git push origin my-new-feature</code></p>
+                    </li>
+                    <li class="flex">
+                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center mr-3 flex-shrink-0">5</div>
+                        <p>提交 <a href="#" class="text-primary hover:underline">Pull Request</a></p>
+                    </li>
+                </ol>
+
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <a href="https://github.com/turtacn/pandoc-docker/issues" target="_blank" class="inline-flex items-center text-primary hover:text-primary/80 transition-colors">
+                        <i class="fa fa-github mr-2"></i>
+                        查看当前 issues 寻找可贡献的任务
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 社区数据 -->
+        <div class="bg-light rounded-2xl p-8">
+            <h3 class="text-xl font-semibold mb-8 text-center">社区成长数据</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-xl p-6 text-center shadow-sm">
+                    <div class="text-4xl font-bold text-primary mb-2" id="contributor-count">28</div>
+                    <div class="text-dark-light">活跃贡献者</div>
+                </div>
+                <div class="bg-white rounded-xl p-6 text-center shadow-sm">
+                    <div class="text-4xl font-bold text-primary mb-2" id="stars-count">1.2k</div>
+                    <div class="text-dark-light">GitHub Stars</div>
+                </div>
+                <div class="bg-white rounded-xl p-6 text-center shadow-sm">
+                    <div class="text-4xl font-bold text-primary mb-2" id="downloads-count">50k+</div>
+                    <div class="text-dark-light">镜像下载量</div>
+                </div>
+            </div>
+
+            <div class="h-64">
+                <canvas id="contribution-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 号召行动 -->
+<section class="py-16 bg-primary text-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">准备好提升您的文档工作流了吗？</h2>
+        <p class="text-white/80 max-w-2xl mx-auto text-lg mb-8">加入 thousands 已经在使用 Pandoc-Docker 的开发者行列，体验高效文档转换的魅力</p>
+        <div class="flex flex-wrap justify-center gap-4">
+            <a href="https://github.com/turtacn/pandoc-docker" target="_blank" class="px-8 py-3 bg-white text-primary rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all font-medium">
+                <i class="fa fa-github mr-2"></i> 立即前往 GitHub
+            </a>
+            <a href="#quickstart" class="px-8 py-3 bg-primary/20 text-white border border-white/30 rounded-lg hover:bg-primary/30 hover:-translate-y-1 transition-all font-medium">
+                查看快速开始指南
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- 页脚 -->
+<footer class="bg-dark text-white/70 py-12">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+            <div class="flex items-center space-x-2 mb-6 md:mb-0">
+                <div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                    <i class="fa fa-file-text-o text-white text-xl"></i>
+                </div>
+                <span class="text-xl font-bold text-white">Pandoc-Docker</span>
+            </div>
+
+            <div class="flex space-x-6">
+                <a href="#" class="hover:text-white transition-colors">
+                    <i class="fa fa-github text-xl"></i>
+                </a>
+                <a href="#" class="hover:text-white transition-colors">
+                    <i class="fa fa-twitter text-xl"></i>
+                </a>
+                <a href="#" class="hover:text-white transition-colors">
+                    <i class="fa fa-discord text-xl"></i>
+                </a>
+                <a href="#" class="hover:text-white transition-colors">
+                    <i class="fa fa-envelope text-xl"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p>© 2024 Pandoc-Docker 项目. 基于 Apache License 2.0 许可.</p>
+            <div class="flex space-x-6 mt-4 md:mt-0">
+                <a href="#" class="hover:text-white transition-colors">许可协议</a>
+                <a href="#" class="hover:text-white transition-colors">贡献指南</a>
+                <a href="#" class="hover:text-white transition-colors">联系我们</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // 移动端菜单切换
+    document.getElementById('menu-toggle').addEventListener('click', function() {
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    // 导航栏滚动效果
+    window.addEventListener('scroll', function() {
+        const navbar = document.getElementById('navbar');
+        if (window.scrollY > 50) {
+            navbar.classList.add('shadow-md');
+            navbar.classList.remove('shadow-sm');
+        } else {
+            navbar.classList.remove('shadow-md');
+            navbar.classList.add('shadow-sm');
+        }
+    });
+
+    // 平滑滚动
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+
+                // 关闭移动菜单
+                document.getElementById('mobile-menu').classList.add('hidden');
+            }
+        });
+    });
+
+    // 贡献图表
+    const ctx = document.getElementById('contribution-chart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+            datasets: [{
+                label: '贡献者数量',
+                data: [5, 8, 12, 15, 18, 20, 22, 24, 26, 28, 30, 33],
+                borderColor: '#165DFF',
+                backgroundColor: 'rgba(22, 93, 255, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: '每月提交数',
+                data: [12, 19, 25, 32, 42, 38, 50, 65, 72, 88, 95, 110],
+                borderColor: '#36D399',
+                backgroundColor: 'rgba(54, 211, 153, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // 数字增长动画
+    function animateValue(id, start, end, duration) {
+        const obj = document.getElementById(id);
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const value = Math.floor(progress * (end - start) + start);
+            obj.innerHTML = value.toLocaleString();
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // 监听元素是否在视口中
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                if (entry.target.id === 'contributor-count') {
+                    animateValue('contributor-count', 0, 28, 2000);
+                } else if (entry.target.id === 'stars-count') {
+                    animateValue('stars-count', 0, 1200, 2000);
+                } else if (entry.target.id === 'downloads-count') {
+                    // 下载量动画
+                    setTimeout(() => {
+                        document.getElementById('downloads-count').classList.add('animate-pulse');
+                        setTimeout(() => {
+                            document.getElementById('downloads-count').classList.remove('animate-pulse');
+                        }, 1000);
+                    }, 500);
+                }
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    // 观察统计数字元素
+    document.querySelectorAll('#contributor-count, #stars-count, #downloads-count').forEach(el => {
+        observer.observe(el);
+    });
+</script>
+</body>
+</html>
