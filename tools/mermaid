@@ -1,0 +1,23 @@
+#!/bin/bash
+# Wrapper for Mermaid CLI to work with pandoc-mermaid-filter safely
+
+set -euo pipefail
+
+PUPPETEER_CONFIG="${PUPPETEER_CONFIG:-/root/puppeteer-config.json}"
+
+log_debug() {
+    if [ "${MERMAID_DEBUG:-0}" = "1" ]; then
+        echo "[mermaid-wrapper] $*" >&2
+    fi
+}
+
+log_debug "Wrapper called with args: $*"
+log_debug "Using config file: ${PUPPETEER_CONFIG}"
+
+# Fallback check
+if [ ! -f "$PUPPETEER_CONFIG" ]; then
+    echo "[mermaid-wrapper] ⚠️ Puppeteer config not found: $PUPPETEER_CONFIG, using no-sandbox" >&2
+    exec mmdc --no-sandbox --disable-setuid-sandbox "$@"
+else
+    exec mmdc --puppeteerConfigFile "$PUPPETEER_CONFIG" "$@"
+fi
